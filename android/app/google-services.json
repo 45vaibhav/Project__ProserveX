@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "490375119314",
+    "project_id": "proservapp-a57b9",
+    "storage_bucket": "proservapp-a57b9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:490375119314:android:cc6a59b73f298df26f080b",
+        "android_client_info": {
+          "package_name": "com.example.agri"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBJnD4RYpPsBsEFp7FWqXVaAV4s-0lScRA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
