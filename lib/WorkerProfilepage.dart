@@ -184,9 +184,9 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
                       icon: const Icon(Icons.send),
                       label: _submitting
                           ? const Text("Submitting...")
-                          : const Text("Submit Feedback"),
+                          : const Text("Submit Feedback",style: TextStyle(color: Colors.black,),),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blueAccent,
+                        backgroundColor: const Color.fromARGB(255, 111, 153, 226),
                         minimumSize: const Size(double.infinity, 50),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),

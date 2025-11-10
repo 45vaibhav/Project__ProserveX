@@ -1,205 +1,204 @@
-import 'package:agri/WorkerDetialPage.dart';
+import 'package:agri/WorkerProfilepage.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
 
 class SearchWorkerPage extends StatefulWidget {
-  final String? filterDomain;
-
-  const SearchWorkerPage({super.key, this.filterDomain});
+  const SearchWorkerPage({super.key});
 
   @override
   State<SearchWorkerPage> createState() => _SearchWorkerPageState();
 }
 
 class _SearchWorkerPageState extends State<SearchWorkerPage> {
-  String searchQuery = "";
+  String? selectedDomain;
+  String searchQuery = '';
+
+  final List<String> domains = [
+    'Electrician',
+    'Plumber',
+    'Carpenter',
+    'Painter',
+    'Mechanic',
+    'Cleaner',
+    'Gardener',
+    'AC Technician'
+  ];
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              // 🔍 Search bar
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.2),
-                      blurRadius: 6,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: TextField(
-                  onChanged: (value) {
-                    setState(() {
-                      searchQuery = value.trim();
-                    });
-                  },
-                  decoration: InputDecoration(
-                    hintText: "Search worker by name or location...",
-                    prefixIcon: const Icon(Icons.search, color: Colors.blue),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 14),
-                  ),
-                ),
-              ),
+    return Padding(
+      padding: const EdgeInsets.all(12.0),
+      child: Column(
+        children: [
+          // Domain Filter
+          DropdownButtonFormField<String>(
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(),
+              labelText: "Filter by Service Domain (optional)",
+            ),
+            value: selectedDomain,
+            items: domains
+                .map((domain) =>
+                    DropdownMenuItem(value: domain, child: Text(domain)))
+                .toList(),
+            onChanged: (value) {
+              setState(() {
+                selectedDomain = value;
+              });
+            },
+          ),
+          const SizedBox(height: 12),
+          // Search Bar
+          TextField(
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(),
+              labelText: "Search by name or location",
+              prefixIcon: Icon(Icons.search),
+            ),
+            onChanged: (value) {
+              setState(() {
+                searchQuery = value.toLowerCase().trim();
+              });
+            },
+          ),
+          const SizedBox(height: 12),
+          // Worker List
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance.collection('workers').snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-              const SizedBox(height: 20),
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const Center(child: Text("No workers found."));
+                }
 
-              // 🔄 Worker List
-              Expanded(
-                child: StreamBuilder<QuerySnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection('workers')
-                      .where('approved', isEqualTo: true)
-                      .snapshots(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(
-                          child: CircularProgressIndicator(color: Colors.blue));
-                    }
+                final workers = snapshot.data!.docs.where((worker) {
+                  final data = worker.data() as Map<String, dynamic>;
+                  final name = (data['name'] ?? '').toString().toLowerCase();
+                  final location = (data['location'] ?? '').toString().toLowerCase();
+                  final service = (data['service'] ?? '').toString().toLowerCase();
 
-                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                      return const Center(
-                        child: Text(
-                          "No workers found.",
-                          style: TextStyle(fontSize: 16, color: Colors.grey),
-                        ),
-                      );
-                    }
+                  final matchesDomain = selectedDomain == null
+                      ? true
+                      : service == selectedDomain!.toLowerCase();
 
-                    // Filter workers
-                    final workers = snapshot.data!.docs.where((doc) {
-                      final data = doc.data() as Map<String, dynamic>;
-                      final name = data['name']?.toString().toLowerCase() ?? '';
-                      final location =
-                          data['location']?.toString().toLowerCase() ?? '';
-                      final domain =
-                          data['domain']?.toString().toLowerCase() ?? '';
+                  final matchesSearch = searchQuery.isEmpty
+                      ? true
+                      : name.contains(searchQuery) || location.contains(searchQuery);
 
-                      final query = searchQuery.toLowerCase();
+                  return matchesDomain && matchesSearch;
+                }).toList();
 
-                      final matchesSearch = query.isEmpty ||
-                          name.contains(query) ||
-                          location.contains(query);
+                if (workers.isEmpty) {
+                  return const Center(child: Text("No workers match your search."));
+                }
 
-                      final matchesDomain = widget.filterDomain == null ||
-                          domain ==
-                              widget.filterDomain!.toLowerCase();
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  itemCount: workers.length,
+                  itemBuilder: (context, index) {
+                    final worker = workers[index];
+                    final data = worker.data() as Map<String, dynamic>;
+                    final rating = (data['rating'] ?? 0.0).toDouble();
 
-                      return matchesSearch && matchesDomain;
-                    }).toList();
-
-                    if (workers.isEmpty) {
-                      return const Center(
-                        child: Text(
-                          "No workers found for this search.",
-                          style: TextStyle(fontSize: 16, color: Colors.grey),
-                        ),
-                      );
-                    }
-
-                    // 📋 Display workers in a card grid
-                    return ListView.builder(
-                      itemCount: workers.length,
-                      itemBuilder: (context, index) {
-                        final worker =
-                            workers[index].data() as Map<String, dynamic>;
-                        final workerId = workers[index].id;
-
-                        return GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => WorkerDetailPage(workerId: workerId),
-                              ),
-                            );
-                          },
-                          child: Card(
-                            elevation: 3,
-                            margin: const EdgeInsets.symmetric(vertical: 10),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
+                    return Card(
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      elevation: 3,
+                      margin: const EdgeInsets.symmetric(vertical: 6),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: () {
+                          // Navigate to WorkerProfile
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  WorkerProfilePage(workerId: worker.id),
                             ),
-                            child: Container(
-                              padding: const EdgeInsets.all(16),
-                              child: Row(
-                                children: [
-                                  // 👤 Avatar or default icon
-                                  CircleAvatar(
-                                    radius: 30,
-                                    backgroundColor: Colors.blue[100],
-                                    child: const Icon(Icons.person,
-                                        size: 35, color: Colors.blue),
-                                  ),
-                                  const SizedBox(width: 16),
-
-                                  // 🧾 Worker info
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                          );
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 28,
+                                backgroundColor: Colors.blueAccent,
+                                child: Text(
+                                  (data['name'] ?? 'W')[0].toUpperCase(),
+                                  style: const TextStyle(
+                                      fontSize: 24, color: Colors.white),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      data['name'] ?? 'Unknown',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      data['service'] ?? '-',
+                                      style: const TextStyle(
+                                          fontSize: 14, color: Colors.grey),
+                                    ),
+                                    Text(
+                                      data['location'] ?? '-',
+                                      style: const TextStyle(
+                                          fontSize: 14, color: Colors.grey),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Row(
                                       children: [
-                                        Text(
-                                          worker['name'] ?? 'Unknown Worker',
-                                          style: const TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                          ),
+                                        RatingBarIndicator(
+                                          rating: rating,
+                                          itemBuilder: (context, _) => const Icon(
+                                              Icons.star, color: Colors.amber),
+                                          itemCount: 5,
+                                          itemSize: 16,
                                         ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          worker['domain'] ?? 'No domain',
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.black54,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Row(
-                                          children: [
-                                            const Icon(Icons.location_on,
-                                                color: Colors.red, size: 16),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              worker['location'] ??
-                                                  'No location',
-                                              style: const TextStyle(
-                                                fontSize: 13,
-                                                color: Colors.grey,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(rating.toStringAsFixed(1),
+                                            style:
+                                                const TextStyle(fontSize: 12)),
                                       ],
                                     ),
-                                  ),
-
-                                  const Icon(Icons.arrow_forward_ios,
-                                      color: Colors.grey, size: 18),
-                                ],
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      data['approved'] == true
+                                          ? 'Approved ✅'
+                                          : 'Pending ⏳',
+                                      style: TextStyle(
+                                          fontSize: 12,
+                                          color: data['approved'] == true
+                                              ? Colors.green
+                                              : Colors.orange),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
+                            ],
                           ),
-                        );
-                      },
+                        ),
+                      ),
                     );
                   },
-                ),
-              ),
-            ],
+                );
+              },
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

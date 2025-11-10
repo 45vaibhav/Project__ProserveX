@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'WorkerProfilePage.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'WorkerProfileAdmin.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -39,17 +39,33 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   Future<void> _approveWorker(String workerId) async {
-    await FirebaseFirestore.instance
-        .collection('workers')
-        .doc(workerId)
-        .update({'approved': true});
+    try {
+      await FirebaseFirestore.instance
+          .collection('workers')
+          .doc(workerId)
+          .update({'approved': true});
+      _showSnack("Worker approved successfully ✅");
+    } catch (e) {
+      _showSnack("Failed to approve worker: $e");
+    }
   }
 
   Future<void> _deleteWorker(String workerId) async {
-    await FirebaseFirestore.instance
-        .collection('workers')
-        .doc(workerId)
-        .delete();
+    try {
+      await FirebaseFirestore.instance
+          .collection('workers')
+          .doc(workerId)
+          .delete();
+      _showSnack("Worker deleted successfully ✅");
+    } catch (e) {
+      _showSnack("Failed to delete worker: $e");
+    }
+  }
+
+  void _showSnack(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   @override
@@ -61,12 +77,15 @@ class _AdminDashboardState extends State<AdminDashboard> {
     ];
 
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: const Text("Admin Dashboard"),
         backgroundColor: const Color(0xFF2980B9),
+        elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
+            tooltip: "Logout",
             onPressed: () => _logout(context),
           ),
         ],
@@ -96,7 +115,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     );
   }
 
-  // Home Page - All Workers
+  /// ---------------------- HOME PAGE ----------------------
   Widget _buildHomePage() {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance.collection('workers').snapshots(),
@@ -122,223 +141,54 @@ class _AdminDashboardState extends State<AdminDashboard> {
             return Card(
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12)),
-              elevation: 2,
+              elevation: 3,
               margin: const EdgeInsets.symmetric(vertical: 6),
-              child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 8),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                         builder: (_) =>
-                            WorkerProfilePage(workerId: worker.id)),
+                            WorkerProfileAdmin(workerId: worker.id)),
                   );
                 },
-                leading: CircleAvatar(
-                  radius: 25,
-                  backgroundColor: Colors.blueAccent,
-                  child: Text(
-                    (data['name'] ?? 'W')[0].toUpperCase(),
-                    style: const TextStyle(fontSize: 24, color: Colors.white),
-                  ),
-                ),
-                title: Text(
-                  data['name'] ?? 'Unknown',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 14),
-                ),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      data['service'] ?? '-',
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                    Text(
-                      data['location'] ?? '-',
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                    Row(
-                      children: [
-                        RatingBarIndicator(
-                          rating: rating,
-                          itemBuilder: (context, _) =>
-                              const Icon(Icons.star, color: Colors.amber),
-                          itemCount: 5,
-                          itemSize: 14,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(rating.toStringAsFixed(1),
-                            style: const TextStyle(fontSize: 10)),
-                      ],
-                    ),
-                    Text(
-                      data['approved'] == true
-                          ? 'Approved ✅'
-                          : 'Pending ⏳',
-                      style: TextStyle(
-                          fontSize: 12,
-                          color: data['approved'] == true
-                              ? Colors.green
-                              : Colors.orange),
-                    ),
-                  ],
-                ),
-                trailing: Column(
-                  mainAxisSize: MainAxisSize.min, // compact column
-                  children: [
-                    IconButton(
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      icon: const Icon(Icons.check_circle, color: Colors.green),
-                      tooltip: 'Approve Worker',
-                      onPressed: data['approved'] == true
-                          ? null
-                          : () => _approveWorker(worker.id),
-                    ),
-                    IconButton(
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      icon: const Icon(Icons.delete, color: Colors.red),
-                      tooltip: 'Delete Worker',
-                      onPressed: () => _deleteWorker(worker.id),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  // Search Page - Filter + Search
-  Widget _buildSearchPage() {
-    return Padding(
-      padding: const EdgeInsets.all(12.0),
-      child: Column(
-        children: [
-          DropdownButtonFormField<String>(
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              labelText: "Filter by Service Domain (optional)",
-            ),
-            value: selectedDomain,
-            items: domains
-                .map((domain) =>
-                    DropdownMenuItem(value: domain, child: Text(domain)))
-                .toList(),
-            onChanged: (value) {
-              setState(() {
-                selectedDomain = value;
-              });
-            },
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              labelText: "Search by name or location",
-              prefixIcon: Icon(Icons.search),
-            ),
-            onChanged: (value) {
-              setState(() {
-                searchQuery = value.toLowerCase().trim();
-              });
-            },
-          ),
-          const SizedBox(height: 12),
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream:
-                  FirebaseFirestore.instance.collection('workers').snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(child: Text("No workers found."));
-                }
-
-                final workers = snapshot.data!.docs.where((worker) {
-                  final data = worker.data() as Map<String, dynamic>;
-                  final name = (data['name'] ?? '').toString().toLowerCase();
-                  final location =
-                      (data['location'] ?? '').toString().toLowerCase();
-                  final service =
-                      (data['service'] ?? '').toString().toLowerCase();
-
-                  final matchesDomain = selectedDomain == null
-                      ? true
-                      : service == selectedDomain!.toLowerCase();
-
-                  final matchesSearch = searchQuery.isEmpty
-                      ? true
-                      : name.contains(searchQuery) ||
-                          location.contains(searchQuery);
-
-                  return matchesDomain && matchesSearch;
-                }).toList();
-
-                if (workers.isEmpty) {
-                  return const Center(
-                      child: Text("No workers match your search."));
-                }
-
-                return ListView.builder(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  itemCount: workers.length,
-                  itemBuilder: (context, index) {
-                    final worker = workers[index];
-                    final data = worker.data() as Map<String, dynamic>;
-                    final rating = (data['rating'] ?? 0.0).toDouble();
-
-                    return Card(
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                      elevation: 2,
-                      margin: const EdgeInsets.symmetric(vertical: 6),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) =>
-                                    WorkerProfilePage(workerId: worker.id)),
-                          );
-                        },
-                        leading: CircleAvatar(
-                          radius: 25,
-                          backgroundColor: Colors.blueAccent,
-                          child: Text(
-                            (data['name'] ?? 'W')[0].toUpperCase(),
-                            style: const TextStyle(
-                                fontSize: 24, color: Colors.white),
-                          ),
-                        ),
-                        title: Text(
-                          data['name'] ?? 'Unknown',
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 28,
+                        backgroundColor: Colors.blueAccent,
+                        child: Text(
+                          (data['name'] ?? 'W')[0].toUpperCase(),
                           style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 14),
+                              fontSize: 24, color: Colors.white),
                         ),
-                        subtitle: Column(
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
+                              data['name'] ?? 'Unknown',
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
                               data['service'] ?? '-',
                               style: const TextStyle(
-                                  fontSize: 12, color: Colors.grey),
+                                  fontSize: 14, color: Colors.grey),
                             ),
                             Text(
                               data['location'] ?? '-',
                               style: const TextStyle(
-                                  fontSize: 12, color: Colors.grey),
+                                  fontSize: 14, color: Colors.grey),
                             ),
+                            const SizedBox(height: 4),
                             Row(
                               children: [
                                 RatingBarIndicator(
@@ -346,13 +196,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
                                   itemBuilder: (context, _) => const Icon(
                                       Icons.star, color: Colors.amber),
                                   itemCount: 5,
-                                  itemSize: 14,
+                                  itemSize: 16,
                                 ),
                                 const SizedBox(width: 4),
                                 Text(rating.toStringAsFixed(1),
-                                    style: const TextStyle(fontSize: 10)),
+                                    style: const TextStyle(fontSize: 12)),
                               ],
                             ),
+                            const SizedBox(height: 2),
                             Text(
                               data['approved'] == true
                                   ? 'Approved ✅'
@@ -365,41 +216,260 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             ),
                           ],
                         ),
-                        trailing: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                              icon: const Icon(Icons.check_circle,
-                                  color: Colors.green),
-                              tooltip: 'Approve Worker',
-                              onPressed: data['approved'] == true
-                                  ? null
-                                  : () => _approveWorker(worker.id),
-                            ),
-                            IconButton(
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              tooltip: 'Delete Worker',
-                              onPressed: () => _deleteWorker(worker.id),
-                            ),
-                          ],
-                        ),
                       ),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-        ],
-      ),
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ElevatedButton(
+                            onPressed: data['approved'] == true
+                                ? null
+                                : () => _approveWorker(worker.id),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8)),
+                              minimumSize: const Size(36, 36),
+                              padding: EdgeInsets.zero,
+                            ),
+                            child: const Icon(Icons.check, size: 20),
+                          ),
+                          const SizedBox(height: 6),
+                          ElevatedButton(
+                            onPressed: () => _deleteWorker(worker.id),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8)),
+                              minimumSize: const Size(36, 36),
+                              padding: EdgeInsets.zero,
+                            ),
+                            child: const Icon(Icons.delete, size: 20),
+                          ),
+                        ],
+                      )
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
-  // Payment History Page
+  /// ---------------------- SEARCH PAGE ----------------------
+  /// ---------------------- SEARCH PAGE ----------------------
+Widget _buildSearchPage() {
+  return Padding(
+    padding: const EdgeInsets.all(12.0),
+    child: Column(
+      children: [
+        DropdownButtonFormField<String>(
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            labelText: "Filter by Service Domain (optional)",
+          ),
+          value: selectedDomain,
+          items: domains
+              .map((domain) =>
+                  DropdownMenuItem(value: domain, child: Text(domain)))
+              .toList(),
+          onChanged: (value) {
+            setState(() {
+              selectedDomain = value;
+            });
+          },
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            labelText: "Search by name or location",
+            prefixIcon: Icon(Icons.search),
+          ),
+          onChanged: (value) {
+            setState(() {
+              searchQuery = value.toLowerCase().trim();
+            });
+          },
+        ),
+        const SizedBox(height: 12),
+        Expanded(
+          child: StreamBuilder<QuerySnapshot>(
+            stream:
+                FirebaseFirestore.instance.collection('workers').snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                return const Center(child: Text("No workers found."));
+              }
+
+              final workers = snapshot.data!.docs.where((worker) {
+                final data = worker.data() as Map<String, dynamic>;
+                final name = (data['name'] ?? '').toString().toLowerCase();
+                final location =
+                    (data['location'] ?? '').toString().toLowerCase();
+                final service =
+                    (data['service'] ?? '').toString().toLowerCase();
+
+                final matchesDomain = selectedDomain == null
+                    ? true
+                    : service == selectedDomain!.toLowerCase();
+
+                final matchesSearch = searchQuery.isEmpty
+                    ? true
+                    : name.contains(searchQuery) ||
+                        location.contains(searchQuery);
+
+                return matchesDomain && matchesSearch;
+              }).toList();
+
+              if (workers.isEmpty) {
+                return const Center(
+                    child: Text("No workers match your search."));
+              }
+
+              // Use Home Page Card style
+              return ListView.builder(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                itemCount: workers.length,
+                itemBuilder: (context, index) {
+                  final worker = workers[index];
+                  final data = worker.data() as Map<String, dynamic>;
+                  final rating = (data['rating'] ?? 0.0).toDouble();
+
+                  return Card(
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                    elevation: 3,
+                    margin: const EdgeInsets.symmetric(vertical: 6),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => WorkerProfileAdmin(
+                                  workerId: worker.id)),
+                        );
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 12),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 28,
+                              backgroundColor: Colors.blueAccent,
+                              child: Text(
+                                (data['name'] ?? 'W')[0].toUpperCase(),
+                                style: const TextStyle(
+                                    fontSize: 24, color: Colors.white),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    data['name'] ?? 'Unknown',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    data['service'] ?? '-',
+                                    style: const TextStyle(
+                                        fontSize: 14, color: Colors.grey),
+                                  ),
+                                  Text(
+                                    data['location'] ?? '-',
+                                    style: const TextStyle(
+                                        fontSize: 14, color: Colors.grey),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      RatingBarIndicator(
+                                        rating: rating,
+                                        itemBuilder: (context, _) => const Icon(
+                                            Icons.star, color: Colors.amber),
+                                        itemCount: 5,
+                                        itemSize: 16,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(rating.toStringAsFixed(1),
+                                          style:
+                                              const TextStyle(fontSize: 12)),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    data['approved'] == true
+                                        ? 'Approved ✅'
+                                        : 'Pending ⏳',
+                                    style: TextStyle(
+                                        fontSize: 12,
+                                        color: data['approved'] == true
+                                            ? Colors.green
+                                            : Colors.orange),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                ElevatedButton(
+                                  onPressed: data['approved'] == true
+                                      ? null
+                                      : () => _approveWorker(worker.id),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.green,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(8)),
+                                    minimumSize: const Size(36, 36),
+                                    padding: EdgeInsets.zero,
+                                  ),
+                                  child: const Icon(Icons.check, size: 20),
+                                ),
+                                const SizedBox(height: 6),
+                                ElevatedButton(
+                                  onPressed: () => _deleteWorker(worker.id),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.red,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(8)),
+                                    minimumSize: const Size(36, 36),
+                                    padding: EdgeInsets.zero,
+                                  ),
+                                  child: const Icon(Icons.delete, size: 20),
+                                ),
+                              ],
+                            )
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
+    ));
+  }
+
+  /// ---------------------- PAYMENT HISTORY ----------------------
   Widget _buildPaymentHistoryPage() {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance.collection('payments').snapshots(),
@@ -410,7 +480,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return const Center(
-            child: Text("No payment history found.", style: TextStyle(fontSize: 16)),
+            child: Text("No payment history found.",
+                style: TextStyle(fontSize: 16)),
           );
         }
 
@@ -434,7 +505,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
               elevation: 2,
               margin: const EdgeInsets.symmetric(vertical: 6),
               child: ListTile(
-                title: Text(userName, style: const TextStyle(fontWeight: FontWeight.bold)),
+                title: Text(userName,
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
                 subtitle: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
