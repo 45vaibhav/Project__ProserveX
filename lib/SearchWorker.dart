@@ -1,4 +1,4 @@
-import 'package:agri/WorkerProfilepage.dart';
+import 'package:ProserveX/WorkerProfilepage.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';

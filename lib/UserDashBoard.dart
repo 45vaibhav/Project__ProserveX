@@ -1,5 +1,5 @@
-import 'package:agri/SearchWorker.dart';
-import 'package:agri/UserPayment.dart';
+import 'package:ProserveX/SearchWorker.dart';
+import 'package:ProserveX/UserPayment.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'RegisterWorkerPage.dart';

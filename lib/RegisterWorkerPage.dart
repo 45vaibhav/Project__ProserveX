@@ -61,7 +61,6 @@ class _RegisterWorkerPageState extends State<RegisterWorkerPage> {
       );
 
       Navigator.pop(context);
-
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -86,87 +85,141 @@ class _RegisterWorkerPageState extends State<RegisterWorkerPage> {
     const deepBlue = Color(0xFF2980B9);
 
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: const Text('Register as Worker'),
         backgroundColor: deepBlue,
+        elevation: 0,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              TextFormField(
-                controller: _name,
-                decoration: const InputDecoration(
-                  labelText: 'Full Name',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (v) => v == null || v.isEmpty ? 'Enter name' : null,
-              ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
-                value: _service,
-                items: _services
-                    .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                    .toList(),
-                onChanged: (v) => setState(() => _service = v),
-                decoration: const InputDecoration(
-                  labelText: 'Select Service',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (v) => v == null ? 'Select service' : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _phone,
-                keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
-                  labelText: 'Phone',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (v) => v == null || v.isEmpty ? 'Enter phone' : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _location,
-                decoration: const InputDecoration(
-                  labelText: 'Location',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (v) => v == null || v.isEmpty ? 'Enter location' : null,
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _experience,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Experience (years)',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (v) => v == null || v.isEmpty ? 'Enter experience' : null,
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _loading ? null : _submit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: deepBlue,
-                  minimumSize: const Size.fromHeight(48),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Card(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          elevation: 6,
+          shadowColor: Colors.black26,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Center(
+                    child: Icon(
+                      Icons.person_add_alt_1,
+                      size: 60,
+                      color: Color(0xFF2980B9),
+                    ),
                   ),
-                ),
-                child: _loading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text(
-                        'Submit',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  const SizedBox(height: 16),
+                  const Center(
+                    child: Text(
+                      'Register Your Profile',
+                      style:
+                          TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Name
+                  _buildTextField(
+                    controller: _name,
+                    label: 'Full Name',
+                    icon: Icons.person,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Service Dropdown
+                  DropdownButtonFormField<String>(
+                    value: _service,
+                    items: _services
+                        .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                        .toList(),
+                    onChanged: (v) => setState(() => _service = v),
+                    decoration: InputDecoration(
+                      labelText: 'Select Service',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
+                      prefixIcon: const Icon(Icons.handyman),
+                    ),
+                    validator: (v) => v == null ? 'Select service' : null,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Phone
+                  _buildTextField(
+                    controller: _phone,
+                    label: 'Phone Number',
+                    icon: Icons.phone,
+                    keyboardType: TextInputType.phone,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Location
+                  _buildTextField(
+                    controller: _location,
+                    label: 'Location',
+                    icon: Icons.location_on,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Experience
+                  _buildTextField(
+                    controller: _experience,
+                    label: 'Experience (years)',
+                    icon: Icons.work,
+                    keyboardType: TextInputType.number,
+                  ),
+                  const SizedBox(height: 30),
+
+                  // Submit button
+                  ElevatedButton(
+                    onPressed: _loading ? null : _submit,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      backgroundColor: deepBlue,
+                      elevation: 4,
+                    ),
+                    child: _loading
+                        ? const CircularProgressIndicator(
+                            color: Colors.white,
+                          )
+                        : const Text(
+                            'Submit Registration',
+                            style: TextStyle( color: Colors.black,
+                                fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    IconData? icon,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: icon != null ? Icon(icon, color: const Color(0xFF2980B9)) : null,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        filled: true,
+        fillColor: Colors.grey[100],
+      ),
+      validator: (v) => v == null || v.isEmpty ? 'Enter $label' : null,
     );
   }
 }

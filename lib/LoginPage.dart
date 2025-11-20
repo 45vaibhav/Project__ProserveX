@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:agri/AdminDashboard.dart';
-import 'package:agri/UserDashboard.dart';
-import 'package:agri/SignupPage.dart';
+import 'package:ProserveX/AdminDashboard.dart';
+import 'package:ProserveX/UserDashboard.dart';
+import 'package:ProserveX/SignupPage.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:razorpay_flutter/razorpay_flutter.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -14,81 +12,44 @@ class RequestWorkerPage extends StatefulWidget {
 }
 
 class _RequestWorkerPageState extends State<RequestWorkerPage> {
-  late Razorpay _razorpay;
-  final String adminPhone = "+919876543210"; // Admin number
-  final double amount = 500; // Payment amount
+  final String adminPhone = "+917498146954";
+  final double amount = 500;
 
-  @override
-  void initState() {
-    super.initState();
-    _razorpay = Razorpay();
-    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
-    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
-    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
-  }
+  // ------------------- Call Admin -------------------
+  void _callAdmin() async {
+    final Uri callUri = Uri(scheme: 'tel', path: adminPhone);
 
-  @override
-  void dispose() {
-    _razorpay.clear();
-    super.dispose();
-  }
-
-  // ------------------- Razorpay Payment -------------------
-  void _openCheckout(double amount) {
-    var options = {
-      'key': 'rzp_test_YourKeyHere', // Replace with your Razorpay test/live key
-      'amount': (amount * 100).toInt(), // convert rupees to paise
-      'name': 'ProServeX Admin',
-      'description': 'Payment for ${widget.domain} service',
-      'prefill': {
-        'contact': FirebaseAuth.instance.currentUser?.phoneNumber ?? '',
-        'email': FirebaseAuth.instance.currentUser?.email ?? ''
-      },
-      'external': {
-        'wallets': ['paytm']
-      }
-    };
-
-    try {
-      _razorpay.open(options);
-    } catch (e) {
-      Fluttertoast.showToast(msg: "Error opening Razorpay: $e");
+    if (!await launchUrl(callUri, mode: LaunchMode.platformDefault)) {
+      _showMessage("Could not launch phone dialer");
     }
   }
 
-  void _handlePaymentSuccess(PaymentSuccessResponse response) async {
+  // ------------------- Save Payment Request to Firestore -------------------
+  void _savePaymentRequest() async {
     try {
       await FirebaseFirestore.instance.collection('payments').add({
         'domain': widget.domain,
         'amount': amount,
         'userId': FirebaseAuth.instance.currentUser?.uid ?? "unknown",
-        'paymentId': response.paymentId,
         'timestamp': Timestamp.now(),
-        'status': "success",
+        'status': "pending", // no actual payment yet
       });
-      Fluttertoast.showToast(
-          msg: "Payment successful ✅\nPayment ID: ${response.paymentId}");
+
+      _showMessage("Payment request saved successfully!");
     } catch (e) {
-      Fluttertoast.showToast(msg: "Error saving payment: $e");
+      _showMessage("Error saving payment request: $e");
     }
   }
 
-  void _handlePaymentError(PaymentFailureResponse response) {
-    Fluttertoast.showToast(
-        msg:
-            "Payment failed ❌\nCode: ${response.code}\nMessage: ${response.message}");
-  }
-
-  void _handleExternalWallet(ExternalWalletResponse response) {
-    Fluttertoast.showToast(msg: "External Wallet: ${response.walletName}");
-  }
-
-  // ------------------- Call Admin -------------------
-  void _callAdmin() async {
-    final Uri callUri = Uri(scheme: 'tel', path: adminPhone);
-    if (!await launchUrl(callUri, mode: LaunchMode.platformDefault)) {
-      Fluttertoast.showToast(msg: "Could not launch phone dialer");
-    }
+  // ------------------- Show SnackBar Message -------------------
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
   // ------------------- UI -------------------
@@ -106,21 +67,24 @@ class _RequestWorkerPageState extends State<RequestWorkerPage> {
           children: [
             Text(
               "Request for: ${widget.domain}",
-              style: const TextStyle(
-                  fontSize: 22, fontWeight: FontWeight.bold),
+              style:
+                  const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
             const Text(
-              "If you need a worker for this service, you can either call the admin or pay to confirm the request.",
+              "If you need a worker for this service, you can call the admin or save a payment request to confirm.",
               style: TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 40),
+
+            // Call Admin Button
             Center(
               child: ElevatedButton.icon(
                 icon: const Icon(Icons.call),
                 label: const Text(
                   "Call Admin",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style:
+                      TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
@@ -132,23 +96,26 @@ class _RequestWorkerPageState extends State<RequestWorkerPage> {
                 onPressed: _callAdmin,
               ),
             ),
+
             const SizedBox(height: 20),
+
+            // Save Payment Request Button
             Center(
               child: ElevatedButton.icon(
-                icon: const Icon(Icons.payment),
+                icon: const Icon(Icons.save),
                 label: Text(
-                  "Pay ₹$amount",
+                  "Save Payment Request ₹$amount",
                   style: const TextStyle(
                       fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 60, vertical: 16),
+                      horizontal: 40, vertical: 16),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14)),
                 ),
-                onPressed: () => _openCheckout(amount),
+                onPressed: _savePaymentRequest,
               ),
             ),
           ],
