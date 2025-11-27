@@ -1,3 +1,4 @@
+import 'package:ProserveX/Paymentpage.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -25,21 +26,21 @@ class _RequestWorkerPageState extends State<RequestWorkerPage> {
   }
 
   // ------------------- Save Payment Request to Firestore -------------------
-  void _savePaymentRequest() async {
-    try {
-      await FirebaseFirestore.instance.collection('payments').add({
-        'domain': widget.domain,
-        'amount': amount,
-        'userId': FirebaseAuth.instance.currentUser?.uid ?? "unknown",
-        'timestamp': Timestamp.now(),
-        'status': "pending", // no actual payment yet
-      });
+  // void _savePaymentRequest() async {
+  //   try {
+  //     await FirebaseFirestore.instance.collection('payments').add({
+  //       'domain': widget.domain,
+  //       'amount': amount,
+  //       'userId': FirebaseAuth.instance.currentUser?.uid ?? "unknown",
+  //       'timestamp': Timestamp.now(),
+  //       'status': "pending", // no actual payment yet
+  //     });
 
-      _showMessage("Payment request saved successfully!");
-    } catch (e) {
-      _showMessage("Error saving payment request: $e");
-    }
-  }
+  //     _showMessage("Payment request saved successfully!");
+  //   } catch (e) {
+  //     _showMessage("Error saving payment request: $e");
+  //   }
+  // }
 
   // ------------------- Show SnackBar Message -------------------
   void _showMessage(String message) {
@@ -67,8 +68,7 @@ class _RequestWorkerPageState extends State<RequestWorkerPage> {
           children: [
             Text(
               "Request for: ${widget.domain}",
-              style:
-                  const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
             const Text(
@@ -83,15 +83,17 @@ class _RequestWorkerPageState extends State<RequestWorkerPage> {
                 icon: const Icon(Icons.call),
                 label: const Text(
                   "Call Admin",
-                  style:
-                      TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 60, vertical: 16),
+                    horizontal: 60,
+                    vertical: 16,
+                  ),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                 ),
                 onPressed: _callAdmin,
               ),
@@ -106,16 +108,28 @@ class _RequestWorkerPageState extends State<RequestWorkerPage> {
                 label: Text(
                   "Save Payment Request ₹$amount",
                   style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 40, vertical: 16),
+                    horizontal: 40,
+                    vertical: 16,
+                  ),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                 ),
-                onPressed: _savePaymentRequest,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>  BasicPaymentPage(),
+                    ),
+                  );
+                },
               ),
             ),
           ],
