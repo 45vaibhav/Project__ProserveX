@@ -95,7 +95,6 @@ class _WorkerListPageState extends State<WorkerListPage> {
                                 Icons.info_outline,
                                 color: Colors.blueAccent,
                               ),
-                              // Can view profile but no contact option
                               onTap: () {
                                 Navigator.push(
                                   context,
@@ -139,8 +138,6 @@ class _WorkerListPageState extends State<WorkerListPage> {
                     ),
                   ),
           ),
-
-          // 🟩 Bottom buttons
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(16.0),

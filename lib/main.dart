@@ -3,7 +3,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'OnboardingScreen.dart';
 import 'LoginPage.dart';
 import 'UserDashboard.dart';
@@ -43,8 +42,6 @@ class ProServeXApp extends StatelessWidget {
     );
   }
 }
-
-/// Wrapper to decide which screen to show
 class SplashWrapper extends StatefulWidget {
   const SplashWrapper({super.key});
 
@@ -73,18 +70,14 @@ class _SplashWrapperState extends State<SplashWrapper> {
   @override
   Widget build(BuildContext context) {
     if (_hasSeenOnboarding == null) {
-      // Waiting for SharedPreferences
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
     if (!_hasSeenOnboarding!) {
-      // First-time user → show onboarding
       return const OnboardingScreen();
     }
-
-    // Already seen onboarding → check auth
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {

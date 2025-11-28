@@ -114,8 +114,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
       ),
     );
   }
-
-  /// ---------------------- HOME PAGE ----------------------
   Widget _buildHomePage() {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance.collection('workers').snapshots(),
@@ -127,8 +125,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return const Center(child: Text("No pending workers found."));
         }
-
-        // Show only pending workers (approved == false OR missing)
         final workers = snapshot.data!.docs.where((worker) {
           final data = worker.data() as Map<String, dynamic>;
           final approved = data['approved'] as bool?;
@@ -259,8 +255,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
       },
     );
   }
-
-  /// ---------------------- SEARCH PAGE ----------------------
   Widget _buildSearchPage() {
     return Padding(
       padding: const EdgeInsets.all(12.0),
@@ -468,8 +462,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
       ),
     );
   }
-
-  /// ---------------------- PAYMENT HISTORY ----------------------
   Widget _buildPaymentHistoryPage() {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance.collection('payments').snapshots(),

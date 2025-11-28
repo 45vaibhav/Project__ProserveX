@@ -4,14 +4,14 @@ class Worker {
   final String id;
   final String name;
   final String service;
-  final String experience; // always String
-  final String phone;      // always String
+  final String experience; 
+  final String phone;      
   final String email;
   final String address;
   final double rating;
   final int ratingCount;
   final List<String> feedback;
-  final bool approved;     // admin approves
+  final bool approved;     
 
   Worker({
     required this.id,

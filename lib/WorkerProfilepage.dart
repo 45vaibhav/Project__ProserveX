@@ -14,8 +14,6 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
   double _rating = 0;
   final TextEditingController _feedbackController = TextEditingController();
   bool _submitting = false;
-
-  /// 🔹 Submit rating and feedback safely
   Future<void> _submitFeedback() async {
     if (_rating == 0 || _feedbackController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -32,15 +30,11 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
 
       await FirebaseFirestore.instance.runTransaction((transaction) async {
         final snapshot = await transaction.get(docRef);
-
-        // If worker does not exist, stop
         if (!snapshot.exists) {
           throw Exception("Worker does not exist.");
         }
 
         final data = snapshot.data() ?? {};
-
-        // Handle missing rating or ratingCount safely
         double oldRating = (data['rating'] ?? 0).toDouble();
         int ratingCount = (data['ratingCount'] ?? 0).toInt();
 
@@ -120,8 +114,6 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
                       ),
                     ),
                     const SizedBox(height: 20),
-
-                    // Basic info
                     _buildInfoRow("Name", data['name']),
                     _buildInfoRow("Service", data['service']),
                     _buildInfoRow("Location", data['location']),
@@ -137,16 +129,12 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
 
                     const SizedBox(height: 20),
                     const Divider(),
-
-                    // Rating and feedback form
                     const Text(
                       "Give Rating & Feedback",
                       style:
                           TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 10),
-
-                    // ⭐ Rating bar
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(5, (index) {
@@ -165,8 +153,6 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
                       }),
                     ),
                     const SizedBox(height: 10),
-
-                    // 💬 Feedback text box
                     TextField(
                       controller: _feedbackController,
                       decoration: InputDecoration(
@@ -177,8 +163,6 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
                       maxLines: 3,
                     ),
                     const SizedBox(height: 12),
-
-                    // 🚀 Submit button
                     ElevatedButton.icon(
                       onPressed: _submitting ? null : _submitFeedback,
                       icon: const Icon(Icons.send),
@@ -195,8 +179,6 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
                     ),
 
                     const SizedBox(height: 20),
-
-                    // 📜 Display latest feedback
                     if (data['feedback'] != null)
                       Container(
                         padding: const EdgeInsets.all(12),
@@ -221,8 +203,6 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
       ),
     );
   }
-
-  /// Small info display widget
   Widget _buildInfoRow(String label, String? value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),

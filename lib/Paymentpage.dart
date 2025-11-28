@@ -47,10 +47,6 @@ class _BasicPaymentPageState extends State<BasicPaymentPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text("Payment Success! Redirecting...")),
     );
-
-    // -------------------------------
-    // ✅ Redirect to USER DASHBOARD
-    // -------------------------------
     Future.delayed(Duration(seconds: 1), () {
       Navigator.pushReplacement(
         context,

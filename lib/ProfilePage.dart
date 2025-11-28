@@ -26,7 +26,11 @@ class _ProfilePageState extends State<ProfilePage> {
         backgroundColor: const Color(0xFF2980B9),
       ),
       body: StreamBuilder<DocumentSnapshot>(
-        stream: FirebaseFirestore.instance.collection('users').doc(user!.uid).snapshots(),
+        stream:
+            FirebaseFirestore.instance
+                .collection('users')
+                .doc(user!.uid)
+                .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -42,18 +46,22 @@ class _ProfilePageState extends State<ProfilePage> {
             padding: const EdgeInsets.all(20),
             child: Column(
               children: [
-                // --- Profile Picture ---
                 CircleAvatar(
                   radius: 60,
                   backgroundColor: const Color(0xFF2980B9).withOpacity(0.2),
-                  child: const Icon(Icons.person, size: 60, color: Color(0xFF2980B9)),
+                  child: const Icon(
+                    Icons.person,
+                    size: 60,
+                    color: Color(0xFF2980B9),
+                  ),
                 ),
                 const SizedBox(height: 16),
-
-                // --- Name & Email ---
                 Text(
                   data['name'] ?? "No Name",
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -61,47 +69,87 @@ class _ProfilePageState extends State<ProfilePage> {
                   style: const TextStyle(color: Colors.grey, fontSize: 16),
                 ),
                 const SizedBox(height: 20),
-
-                // --- User Info Card ---
                 Card(
                   elevation: 3,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text("👤 User Information",
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        const Text(
+                          "👤 User Information",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                         const SizedBox(height: 10),
-                        _buildInfoRow(Icons.phone, "Phone", data['phone'] ?? "Not added"),
-                        _buildInfoRow(Icons.home, "Address", data['address'] ?? "Not provided"),
-                        _buildInfoRow(Icons.location_on, "Location", data['location'] ?? "Unknown"),
+                        _buildInfoRow(
+                          Icons.phone,
+                          "Phone",
+                          data['phone'] ?? "Not added",
+                        ),
+                        _buildInfoRow(
+                          Icons.home,
+                          "Address",
+                          data['address'] ?? "Not provided",
+                        ),
+                        _buildInfoRow(
+                          Icons.location_on,
+                          "Location",
+                          data['location'] ?? "Unknown",
+                        ),
                       ],
                     ),
                   ),
                 ),
                 const SizedBox(height: 20),
-
-                // --- Worker Info Card ---
                 if (data.containsKey('service')) ...[
                   Card(
                     elevation: 3,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text("🛠 Worker Information",
-                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          const Text(
+                            "🛠 Worker Information",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           const SizedBox(height: 10),
-                          _buildInfoRow(Icons.work, "Service", data['service'] ?? "N/A"),
-                          _buildInfoRow(Icons.badge, "Experience", data['experience'] ?? "N/A"),
-                          _buildInfoRow(Icons.verified, "Verified",
-                              (data['verified'] ?? false) ? "✅ Verified" : "❌ Not Verified"),
-                          _buildInfoRow(Icons.admin_panel_settings, "Approved by Admin",
-                              (data['approvedByAdmin'] ?? false) ? "✅ Approved" : "⏳ Pending Approval"),
+                          _buildInfoRow(
+                            Icons.work,
+                            "Service",
+                            data['service'] ?? "N/A",
+                          ),
+                          _buildInfoRow(
+                            Icons.badge,
+                            "Experience",
+                            data['experience'] ?? "N/A",
+                          ),
+                          _buildInfoRow(
+                            Icons.verified,
+                            "Verified",
+                            (data['verified'] ?? false)
+                                ? "✅ Verified"
+                                : "❌ Not Verified",
+                          ),
+                          _buildInfoRow(
+                            Icons.admin_panel_settings,
+                            "Approved by Admin",
+                            (data['approvedByAdmin'] ?? false)
+                                ? "✅ Approved"
+                                : "⏳ Pending Approval",
+                          ),
                         ],
                       ),
                     ),
@@ -114,8 +162,6 @@ class _ProfilePageState extends State<ProfilePage> {
                 ],
 
                 const SizedBox(height: 20),
-
-                // --- Logout Button ---
                 ElevatedButton.icon(
                   onPressed: () async {
                     await FirebaseAuth.instance.signOut();

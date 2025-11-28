@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:url_launcher/url_launcher.dart'; // For calling functionality
+import 'package:url_launcher/url_launcher.dart'; 
 
 class WorkerProfileAdmin extends StatefulWidget {
   final String workerId;
@@ -20,8 +20,6 @@ class _WorkerProfilePageState extends State<WorkerProfileAdmin> {
     super.initState();
     _fetchWorkerData();
   }
-
-  /// Fetch worker data from Firestore
   Future<void> _fetchWorkerData() async {
     setState(() {
       _loading = true;
@@ -54,8 +52,6 @@ class _WorkerProfilePageState extends State<WorkerProfileAdmin> {
       });
     }
   }
-
-  /// 🔹 Call worker using phone dialer
   Future<void> _callWorker(String? phoneNumber) async {
     if (phoneNumber == null || phoneNumber.isEmpty) {
       _showSnack("Phone number not available");
@@ -69,8 +65,6 @@ class _WorkerProfilePageState extends State<WorkerProfileAdmin> {
       _showSnack("Could not launch phone dialer");
     }
   }
-
-  /// 🔹 Delete worker from Firestore
   Future<void> _deleteWorker() async {
     try {
       await FirebaseFirestore.instance
@@ -112,7 +106,6 @@ class _WorkerProfilePageState extends State<WorkerProfileAdmin> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              // Gradient Header
                               Container(
                                 decoration: BoxDecoration(
                                   gradient: const LinearGradient(
@@ -166,8 +159,6 @@ class _WorkerProfilePageState extends State<WorkerProfileAdmin> {
                                 ),
                               ),
                               const SizedBox(height: 20),
-
-                              // Info Card
                               Card(
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
@@ -197,8 +188,6 @@ class _WorkerProfilePageState extends State<WorkerProfileAdmin> {
                               ),
 
                               const SizedBox(height: 20),
-
-                              // Call Button
                               if (_workerData!['phone'] != null &&
                                   _workerData!['phone'].toString().isNotEmpty)
                                 ElevatedButton.icon(
@@ -219,8 +208,6 @@ class _WorkerProfilePageState extends State<WorkerProfileAdmin> {
                                 ),
 
                               const SizedBox(height: 12),
-
-                              // Delete Button
                               ElevatedButton.icon(
                                 onPressed: () {
                                   showDialog(
@@ -267,8 +254,6 @@ class _WorkerProfilePageState extends State<WorkerProfileAdmin> {
                     ),
     );
   }
-
-  /// Small info display widget
   Widget _buildInfoRow(String label, String? value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),

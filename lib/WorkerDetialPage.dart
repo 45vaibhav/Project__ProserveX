@@ -47,15 +47,12 @@ class WorkerDetailPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // 👤 Profile Picture or Placeholder
                 CircleAvatar(
                   radius: 60,
                   backgroundColor: Colors.blue[100],
                   child: const Icon(Icons.person, size: 70, color: Colors.blue),
                 ),
                 const SizedBox(height: 20),
-
-                // 🧾 Worker Basic Info
                 Text(
                   worker['name'] ?? 'Unknown Worker',
                   style: const TextStyle(
@@ -74,8 +71,6 @@ class WorkerDetailPage extends StatelessWidget {
                 ),
 
                 const SizedBox(height: 20),
-
-                // 📋 Information Cards
                 _buildInfoCard(
                   icon: Icons.work_outline,
                   title: "Experience",
@@ -94,8 +89,6 @@ class WorkerDetailPage extends StatelessWidget {
                 ),
 
                 const SizedBox(height: 30),
-
-                // 🌟 Rating / Status Section
                 if (worker['approved'] == true)
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -152,8 +145,6 @@ class WorkerDetailPage extends StatelessWidget {
       ),
     );
   }
-
-  // 🧱 Reusable info card widget
   Widget _buildInfoCard({
     required IconData icon,
     required String title,

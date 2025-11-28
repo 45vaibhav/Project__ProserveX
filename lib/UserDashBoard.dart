@@ -5,7 +5,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'RegisterWorkerPage.dart';
 import 'ProfilePage.dart';
 import 'WorkerListPage.dart';
-// ✅ New page
 
 class UserDashboard extends StatefulWidget {
   const UserDashboard({super.key});
@@ -61,7 +60,7 @@ class _UserDashboardState extends State<UserDashboard> {
      bottomNavigationBar: BottomNavigationBar(
   type: BottomNavigationBarType.fixed,
   backgroundColor: Colors.white,
-  selectedItemColor: const Color(0xFF2980B9), // royal blue
+  selectedItemColor: const Color(0xFF2980B9), 
   unselectedItemColor: Colors.grey,
   selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
   unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500),

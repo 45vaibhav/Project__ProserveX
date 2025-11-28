@@ -34,7 +34,6 @@ class _RegisterWorkerPageState extends State<RegisterWorkerPage> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _loading = true);
-
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception('Please sign in first.');
@@ -46,7 +45,7 @@ class _RegisterWorkerPageState extends State<RegisterWorkerPage> {
         'experience': _experience.text.trim(),
         'service': _service,
         'uid': user.uid,
-        'isApproved': false, // pending admin approval
+        'isApproved': false, 
         'createdAt': FieldValue.serverTimestamp(),
       };
 
@@ -120,16 +119,12 @@ class _RegisterWorkerPageState extends State<RegisterWorkerPage> {
                     ),
                   ),
                   const SizedBox(height: 24),
-
-                  // Name
                   _buildTextField(
                     controller: _name,
                     label: 'Full Name',
                     icon: Icons.person,
                   ),
                   const SizedBox(height: 16),
-
-                  // Service Dropdown
                   DropdownButtonFormField<String>(
                     value: _service,
                     items: _services
@@ -146,8 +141,6 @@ class _RegisterWorkerPageState extends State<RegisterWorkerPage> {
                     validator: (v) => v == null ? 'Select service' : null,
                   ),
                   const SizedBox(height: 16),
-
-                  // Phone
                   _buildTextField(
                     controller: _phone,
                     label: 'Phone Number',
@@ -155,16 +148,12 @@ class _RegisterWorkerPageState extends State<RegisterWorkerPage> {
                     keyboardType: TextInputType.phone,
                   ),
                   const SizedBox(height: 16),
-
-                  // Location
                   _buildTextField(
                     controller: _location,
                     label: 'Location',
                     icon: Icons.location_on,
                   ),
                   const SizedBox(height: 16),
-
-                  // Experience
                   _buildTextField(
                     controller: _experience,
                     label: 'Experience (years)',
@@ -172,8 +161,6 @@ class _RegisterWorkerPageState extends State<RegisterWorkerPage> {
                     keyboardType: TextInputType.number,
                   ),
                   const SizedBox(height: 30),
-
-                  // Submit button
                   ElevatedButton(
                     onPressed: _loading ? null : _submit,
                     style: ElevatedButton.styleFrom(

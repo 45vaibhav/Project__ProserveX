@@ -13,7 +13,7 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final _formKey = GlobalKey<FormState>(); // unique per widget instance
+  final _formKey = GlobalKey<FormState>(); 
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   bool _isLoading = false;

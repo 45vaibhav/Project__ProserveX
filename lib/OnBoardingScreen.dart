@@ -6,11 +6,8 @@ class OnboardingScreen extends StatelessWidget {
   const OnboardingScreen({super.key});
 
   Future<void> _onGetStarted(BuildContext context) async {
-    // Save that user has seen onboarding
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('hasSeenOnboarding', true);
-
-    // Navigate to SignupPage
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (_) => const Signuppage()),
@@ -28,7 +25,7 @@ class OnboardingScreen extends StatelessWidget {
           children: [
             Expanded(
               child: Image.asset(
-                "assets/onboarding1.png", // Make sure this exists in assets
+                "assets/onboarding1.png", 
                 fit: BoxFit.contain,
               ),
             ),

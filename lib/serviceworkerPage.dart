@@ -12,18 +12,27 @@ class ServiceWorkersPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text('$serviceName Workers')),
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('workers')
-            .where('service', isEqualTo: serviceName)
-            .where('approved', isEqualTo: true) // only approved
-            .orderBy('createdAt', descending: true)
-            .snapshots(),
+        stream:
+            FirebaseFirestore.instance
+                .collection('workers')
+                .where('service', isEqualTo: serviceName)
+                .where('approved', isEqualTo: true)
+                .orderBy('createdAt', descending: true)
+                .snapshots(),
         builder: (ctx, snap) {
-          if (snap.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
-          if (snap.hasError) return const Center(child: Text('Error loading workers'));
+          if (snap.connectionState == ConnectionState.waiting)
+            return const Center(child: CircularProgressIndicator());
+          if (snap.hasError)
+            return const Center(child: Text('Error loading workers'));
 
           final docs = snap.data?.docs ?? [];
-          if (docs.isEmpty) return Center(child: Text('No $serviceName workers available yet', style: const TextStyle(color: Colors.grey)));
+          if (docs.isEmpty)
+            return Center(
+              child: Text(
+                'No $serviceName workers available yet',
+                style: const TextStyle(color: Colors.grey),
+              ),
+            );
 
           return ListView.builder(
             itemCount: docs.length,
@@ -31,12 +40,16 @@ class ServiceWorkersPage extends StatelessWidget {
               final data = docs[i].data() as Map<String, dynamic>;
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 elevation: 2,
                 child: ListTile(
                   leading: const CircleAvatar(child: Icon(Icons.person)),
                   title: Text(data['name'] ?? 'Unknown'),
-                  subtitle: Text('${data['location'] ?? 'N/A'} • ${data['experience'] ?? '0'} yrs'),
+                  subtitle: Text(
+                    '${data['location'] ?? 'N/A'} • ${data['experience'] ?? '0'} yrs',
+                  ),
                   trailing: IconButton(
                     icon: const Icon(Icons.call),
                     onPressed: () async {
@@ -45,7 +58,9 @@ class ServiceWorkersPage extends StatelessWidget {
                       if (await canLaunchUrl(uri)) {
                         await launchUrl(uri);
                       } else {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cannot open dialer')));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Cannot open dialer')),
+                        );
                       }
                     },
                   ),
