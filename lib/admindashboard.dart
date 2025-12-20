@@ -1,8 +1,10 @@
+import 'package:ProserveX/AdminPayment.dart';
+import 'package:ProserveX/WorkDone.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
-import 'WorkerProfileAdmin.dart';
+import 'AdminWorkerProfile.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -73,6 +75,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     List<Widget> pages = [
       _buildHomePage(),
       _buildSearchPage(),
+        const WorkDonePage(),
       _buildPaymentHistoryPage(),
     ];
 
@@ -106,6 +109,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
             icon: Icon(Icons.search),
             label: 'Search Workers',
           ),
+           BottomNavigationBarItem(
+      icon: Icon(Icons.work),
+      label: 'Work Done',
+    ),
           BottomNavigationBarItem(
             icon: Icon(Icons.history),
             label: 'Payment History',

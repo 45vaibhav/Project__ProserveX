@@ -1,6 +1,5 @@
 import 'package:ProserveX/Paymentpage.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -11,16 +10,18 @@ class RequestWorkerPage extends StatefulWidget {
   @override
   State<RequestWorkerPage> createState() => _RequestWorkerPageState();
 }
+
 class _RequestWorkerPageState extends State<RequestWorkerPage> {
   final String adminPhone = "+917498146954";
-  final double amount = 500;
+  final double amount = 500.0; // Make it double for compatibility
+
   void _callAdmin() async {
     final Uri callUri = Uri(scheme: 'tel', path: adminPhone);
-
     if (!await launchUrl(callUri, mode: LaunchMode.platformDefault)) {
       _showMessage("Could not launch phone dialer");
     }
   }
+
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -30,8 +31,12 @@ class _RequestWorkerPageState extends State<RequestWorkerPage> {
       ),
     );
   }
+
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    final userName = user?.displayName ?? user?.email ?? 'Unknown User';
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Request a Worker"),
@@ -52,15 +57,21 @@ class _RequestWorkerPageState extends State<RequestWorkerPage> {
               style: TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 40),
+
+            // Call Admin Button
             Center(
               child: ElevatedButton.icon(
                 icon: const Icon(Icons.call),
                 label: const Text(
                   "Call Admin",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,color: Colors.black),
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue, 
+                  backgroundColor: Colors.blue,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 60,
                     vertical: 16,
@@ -74,6 +85,8 @@ class _RequestWorkerPageState extends State<RequestWorkerPage> {
             ),
 
             const SizedBox(height: 20),
+
+            // Make Payment Button
             Center(
               child: ElevatedButton.icon(
                 icon: const Icon(Icons.payment),
@@ -82,11 +95,11 @@ class _RequestWorkerPageState extends State<RequestWorkerPage> {
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black
+                    color: Colors.black,
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green, 
+                  backgroundColor: Colors.green,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 40,
                     vertical: 16,
@@ -99,7 +112,13 @@ class _RequestWorkerPageState extends State<RequestWorkerPage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => BasicPaymentPage(),
+                      builder:
+                          (context) => BasicPaymentPage(
+                            workerId: "admin_request", // or any worker id
+                            workerName: "Admin Assigned Worker",
+                            userName: userName,
+                            service: widget.domain,
+                          ),
                     ),
                   );
                 },

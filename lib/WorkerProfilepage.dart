@@ -1,5 +1,8 @@
+import 'package:ProserveX/Paymentpage.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class WorkerProfilePage extends StatefulWidget {
   final String workerId;
@@ -14,10 +17,19 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
   double _rating = 0;
   final TextEditingController _feedbackController = TextEditingController();
   bool _submitting = false;
-  Future<void> _submitFeedback() async {
-    if (_rating == 0 || _feedbackController.text.trim().isEmpty) {
+
+  final String adminPhone = "+917498146954";
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  // ---------------- SUBMIT & PAY ----------------
+  Future<void> _submitAndPay() async {
+    if (_rating == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please provide rating and feedback")),
+        const SnackBar(content: Text("Please provide a rating")),
       );
       return;
     }
@@ -28,39 +40,58 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
       final docRef =
           FirebaseFirestore.instance.collection('workers').doc(widget.workerId);
 
-      await FirebaseFirestore.instance.runTransaction((transaction) async {
-        final snapshot = await transaction.get(docRef);
-        if (!snapshot.exists) {
-          throw Exception("Worker does not exist.");
-        }
+      final snapshot = await docRef.get();
+      if (!snapshot.exists) {
+        throw Exception("Worker does not exist.");
+      }
 
-        final data = snapshot.data() ?? {};
-        double oldRating = (data['rating'] ?? 0).toDouble();
-        int ratingCount = (data['ratingCount'] ?? 0).toInt();
+      final data = snapshot.data() ?? {};
+      double oldRating = (data['rating'] ?? 0).toDouble();
+      int ratingCount = (data['ratingCount'] ?? 0).toInt();
+      double newAvg =
+          ((oldRating * ratingCount) + _rating) / (ratingCount + 1);
 
-        double newAvg =
-            ((oldRating * ratingCount) + _rating) / (ratingCount + 1);
-
-        transaction.update(docRef, {
-          'rating': newAvg,
-          'ratingCount': ratingCount + 1,
-          'feedback': _feedbackController.text.trim(),
-          'lastUpdated': FieldValue.serverTimestamp(),
-        });
+      // 1️⃣ Update rating & feedback in Firestore
+      await docRef.update({
+        'rating': newAvg,
+        'ratingCount': ratingCount + 1,
+        'feedback': _feedbackController.text.trim().isEmpty
+            ? null
+            : _feedbackController.text.trim(),
+        'lastUpdated': FieldValue.serverTimestamp(),
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Feedback submitted successfully ✅")),
-      );
+      // 2️⃣ Navigate to Time & Amount page
+      final user = FirebaseAuth.instance.currentUser;
+      final userName = user?.displayName ?? user?.email ?? 'Unknown User';
 
-      _feedbackController.clear();
-      setState(() => _rating = 0);
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => BasicPaymentPage(
+            workerId: widget.workerId,
+            workerName: data['name'] ?? 'Worker',
+            service: data['service'] ?? 'Service',
+            userName: userName,
+          ),
+        ),
+      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error submitting feedback: $e")),
+        SnackBar(content: Text("Error: $e")),
       );
     } finally {
       setState(() => _submitting = false);
+    }
+  }
+
+  // ---------------- CALL ADMIN ----------------
+  Future<void> _callAdmin() async {
+    final Uri uri = Uri(scheme: 'tel', path: adminPhone);
+    if (!await launchUrl(uri)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Could not open dialer")),
+      );
     }
   }
 
@@ -99,7 +130,6 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Avatar
                     Center(
                       child: CircleAvatar(
                         radius: 50,
@@ -118,7 +148,8 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
                     _buildInfoRow("Service", data['service']),
                     _buildInfoRow("Location", data['location']),
                     _buildInfoRow("Experience", "${data['experience']} years"),
-                    _buildInfoRow("Approved",
+                    _buildInfoRow(
+                        "Approved",
                         data['approved'] == true ? "✅ Yes" : "⏳ Pending"),
                     _buildInfoRow(
                       "Average Rating",
@@ -126,7 +157,6 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
                           ? "${data['rating'].toStringAsFixed(1)} ⭐"
                           : "No ratings yet",
                     ),
-
                     const SizedBox(height: 20),
                     const Divider(),
                     const Text(
@@ -156,44 +186,48 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
                     TextField(
                       controller: _feedbackController,
                       decoration: InputDecoration(
-                        labelText: "Enter your feedback",
+                        labelText: "Enter your feedback (optional)",
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10)),
                       ),
                       maxLines: 3,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
                     ElevatedButton.icon(
-                      onPressed: _submitting ? null : _submitFeedback,
-                      icon: const Icon(Icons.send),
+                      onPressed: _submitting ? null : _submitAndPay,
+                      icon: const Icon(Icons.payment),
                       label: _submitting
-                          ? const Text("Submitting...")
-                          : const Text("Submit Feedback",style: TextStyle(color: Colors.black,),),
+                          ? const Text("Processing...")
+                          : const Text(
+                              "Submit & Pay",
+                              style:
+                                  TextStyle(fontSize: 16, color: Colors.black),
+                            ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 111, 153, 226),
+                        backgroundColor:
+                            const Color.fromARGB(255, 111, 153, 226),
                         minimumSize: const Size(double.infinity, 50),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                     ),
-
-                    const SizedBox(height: 20),
-                    if (data['feedback'] != null)
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          "Latest Feedback: ${data['feedback']}",
-                          style: const TextStyle(
-                            fontStyle: FontStyle.italic,
-                            color: Colors.black87,
-                          ),
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      onPressed: _callAdmin,
+                      icon: const Icon(Icons.call),
+                      label: const Text(
+                        "Contact Admin",
+                        style: TextStyle(fontSize: 16, color: Colors.white),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        minimumSize: const Size(double.infinity, 50),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
+                    ),
                   ],
                 ),
               ),
@@ -203,6 +237,7 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
       ),
     );
   }
+
   Widget _buildInfoRow(String label, String? value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
@@ -213,9 +248,7 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
             style: const TextStyle(
                 fontWeight: FontWeight.bold, color: Colors.black87),
           ),
-          Expanded(
-            child: Text(value ?? 'N/A'),
-          ),
+          Expanded(child: Text(value ?? 'N/A')),
         ],
       ),
     );

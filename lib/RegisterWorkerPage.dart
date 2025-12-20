@@ -11,8 +11,10 @@ class RegisterWorkerPage extends StatefulWidget {
 
 class _RegisterWorkerPageState extends State<RegisterWorkerPage> {
   final _formKey = GlobalKey<FormState>();
+
   final TextEditingController _name = TextEditingController();
   final TextEditingController _phone = TextEditingController();
+  final TextEditingController _upiId = TextEditingController();
   final TextEditingController _location = TextEditingController();
   final TextEditingController _experience = TextEditingController();
 
@@ -27,34 +29,43 @@ class _RegisterWorkerPageState extends State<RegisterWorkerPage> {
     'Mechanic',
     'Cleaner',
     'Gardener',
-    'AC Technician'
+    'AC Technician',
   ];
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _loading = true);
+
     try {
       final user = FirebaseAuth.instance.currentUser;
-      if (user == null) throw Exception('Please sign in first.');
+      if (user == null) {
+        throw Exception("Please login first");
+      }
 
-      final data = {
+      final workerData = {
         'name': _name.text.trim(),
         'phone': _phone.text.trim(),
+        'upiId': _upiId.text.trim(), // ✅ REQUIRED FOR PAYOUT
         'location': _location.text.trim(),
         'experience': _experience.text.trim(),
         'service': _service,
         'uid': user.uid,
-        'isApproved': false, 
+        'rating': 0,
+        'ratingCount': 0,
+        'isApproved': false,
         'createdAt': FieldValue.serverTimestamp(),
       };
 
-      await FirebaseFirestore.instance.collection('workers').add(data);
+      await FirebaseFirestore.instance
+          .collection('workers')
+          .add(workerData);
 
       if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Worker registration sent. Pending admin approval.'),
+          content: Text("Registration submitted. Await admin approval."),
           backgroundColor: Colors.green,
         ),
       );
@@ -63,7 +74,7 @@ class _RegisterWorkerPageState extends State<RegisterWorkerPage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
+        SnackBar(content: Text("Error: $e")),
       );
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -74,6 +85,7 @@ class _RegisterWorkerPageState extends State<RegisterWorkerPage> {
   void dispose() {
     _name.dispose();
     _phone.dispose();
+    _upiId.dispose();
     _location.dispose();
     _experience.dispose();
     super.dispose();
@@ -86,99 +98,92 @@ class _RegisterWorkerPageState extends State<RegisterWorkerPage> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('Register as Worker'),
+        title: const Text("Register as Worker"),
         backgroundColor: deepBlue,
-        elevation: 0,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Card(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           elevation: 6,
-          shadowColor: Colors.black26,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Form(
               key: _formKey,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Center(
-                    child: Icon(
-                      Icons.person_add_alt_1,
-                      size: 60,
-                      color: Color(0xFF2980B9),
-                    ),
-                  ),
+                  const Icon(Icons.person_add_alt_1,
+                      size: 60, color: deepBlue),
                   const SizedBox(height: 16),
-                  const Center(
-                    child: Text(
-                      'Register Your Profile',
-                      style:
-                          TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                    ),
+                  const Text(
+                    "Worker Registration",
+                    style: TextStyle(
+                        fontSize: 22, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 24),
-                  _buildTextField(
-                    controller: _name,
-                    label: 'Full Name',
-                    icon: Icons.person,
-                  ),
+
+                  _buildField(_name, "Full Name", Icons.person),
                   const SizedBox(height: 16),
+
                   DropdownButtonFormField<String>(
                     value: _service,
                     items: _services
-                        .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                        .map((s) =>
+                            DropdownMenuItem(value: s, child: Text(s)))
                         .toList(),
                     onChanged: (v) => setState(() => _service = v),
-                    decoration: InputDecoration(
-                      labelText: 'Select Service',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      prefixIcon: const Icon(Icons.handyman),
-                    ),
-                    validator: (v) => v == null ? 'Select service' : null,
+                    decoration: _inputDecoration(
+                        "Service", Icons.handyman),
+                    validator: (v) =>
+                        v == null ? "Select service" : null,
                   ),
+
                   const SizedBox(height: 16),
-                  _buildTextField(
-                    controller: _phone,
-                    label: 'Phone Number',
-                    icon: Icons.phone,
-                    keyboardType: TextInputType.phone,
-                  ),
+                  _buildField(_phone, "Phone Number", Icons.phone,
+                      type: TextInputType.phone),
+
                   const SizedBox(height: 16),
-                  _buildTextField(
-                    controller: _location,
-                    label: 'Location',
-                    icon: Icons.location_on,
+                  _buildField(
+                    _upiId,
+                    "UPI ID (for payments)",
+                    Icons.account_balance_wallet,
+                    hint: "example@upi",
                   ),
+
                   const SizedBox(height: 16),
-                  _buildTextField(
-                    controller: _experience,
-                    label: 'Experience (years)',
-                    icon: Icons.work,
-                    keyboardType: TextInputType.number,
+                  _buildField(_location, "Location", Icons.location_on),
+
+                  const SizedBox(height: 16),
+                  _buildField(
+                    _experience,
+                    "Experience (years)",
+                    Icons.work,
+                    type: TextInputType.number,
                   ),
+
                   const SizedBox(height: 30),
+
                   ElevatedButton(
                     onPressed: _loading ? null : _submit,
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      backgroundColor: deepBlue,
+                      padding:
+                          const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      backgroundColor: deepBlue,
-                      elevation: 4,
                     ),
                     child: _loading
                         ? const CircularProgressIndicator(
-                            color: Colors.white,
-                          )
+                            color: Colors.white)
                         : const Text(
-                            'Submit Registration',
-                            style: TextStyle( color: Colors.black,
-                                fontSize: 18, fontWeight: FontWeight.bold),
+                            "Submit Registration",
+                            style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black),
                           ),
                   ),
                 ],
@@ -190,23 +195,33 @@ class _RegisterWorkerPageState extends State<RegisterWorkerPage> {
     );
   }
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    IconData? icon,
-    TextInputType keyboardType = TextInputType.text,
+  Widget _buildField(
+    TextEditingController controller,
+    String label,
+    IconData icon, {
+    TextInputType type = TextInputType.text,
+    String? hint,
   }) {
     return TextFormField(
       controller: controller,
-      keyboardType: keyboardType,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: icon != null ? Icon(icon, color: const Color(0xFF2980B9)) : null,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        filled: true,
-        fillColor: Colors.grey[100],
+      keyboardType: type,
+      decoration: _inputDecoration(label, icon, hint: hint),
+      validator: (v) =>
+          v == null || v.isEmpty ? "Enter $label" : null,
+    );
+  }
+
+  InputDecoration _inputDecoration(String label, IconData icon,
+      {String? hint}) {
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      prefixIcon: Icon(icon, color: const Color(0xFF2980B9)),
+      filled: true,
+      fillColor: Colors.grey[100],
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
       ),
-      validator: (v) => v == null || v.isEmpty ? 'Enter $label' : null,
     );
   }
 }

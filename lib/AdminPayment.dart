@@ -1,73 +1,86 @@
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:intl/intl.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
+import 'package:flutter/material.dart';
 
-class AdminPaymentPage extends StatelessWidget {
-  const AdminPaymentPage({super.key});
+class PaymentService {
+  final Razorpay _razorpay = Razorpay();
+  Map<String, dynamic>? _currentPaymentData;
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Payment History"),
-        backgroundColor: Color(0xFF2980B9),
-      ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection("payments")
-            .orderBy("timestamp", descending: true)
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+  PaymentService() {
+    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
+    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
+    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
+  }
 
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(
-              child: Text("No payments found"),
-            );
-          }
+  void openCheckout({
+    required String workerId,
+    required String workerName,
+    required String userName,
+    required String service,
+    required int amount,
+  }) {
+    _currentPaymentData = {
+      'workerId': workerId,
+      'workerName': workerName,
+      'userName': userName,
+      'service': service,
+      'totalAmount': amount,
+    };
 
-          final payments = snapshot.data!.docs;
+    var options = {
+      'key': 'rzp_test_RkV4zGjB8rJcNP',
+      'amount': amount * 100, // in paise
+      'name': workerName,
+      'description': service,
+      'prefill': {'contact': '', 'email': ''},
+      'external': {'wallets': ['paytm']}
+    };
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(12),
-            itemCount: payments.length,
-            itemBuilder: (context, index) {
-              final data = payments[index].data() as Map<String, dynamic>;
-              final time = (data["timestamp"] as Timestamp?)?.toDate();
-              final formatted = time != null
-                  ? DateFormat("dd MMM yyyy, hh:mm a").format(time)
-                  : "Unknown";
+    try {
+      _razorpay.open(options);
+    } catch (e) {
+      debugPrint("Error opening Razorpay: $e");
+    }
+  }
 
-              return Card(
-                elevation: 3,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-                child: ListTile(
-                  leading: const Icon(Icons.payments, color: Colors.green),
-                  title: Text(
-                    "₹${data['amount'] ?? 0}",
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  subtitle: Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text("User: ${data['userName'] ?? 'Unknown'}"),
-                        Text("Service: ${data['service'] ?? '-'}"),
-                        Text("Date: $formatted"),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            },
-          );
-        },
-      ),
-    );
+  Future<void> _handlePaymentSuccess(PaymentSuccessResponse response) async {
+    if (_currentPaymentData == null) return;
+
+    try {
+      final int totalAmount = _currentPaymentData!['totalAmount'];
+      final double adminCut = totalAmount * 0.10; // 10% admin cut
+      final double workerAmount = totalAmount - adminCut;
+
+      // Create payment document in Firestore
+      await FirebaseFirestore.instance.collection('payments').add({
+        'workerId': _currentPaymentData!['workerId'],
+        'workerName': _currentPaymentData!['workerName'],
+        'userName': _currentPaymentData!['userName'],
+        'service': _currentPaymentData!['service'],
+        'totalAmount': totalAmount,
+        'workerAmount': workerAmount,
+        'adminCut': adminCut,
+        'paymentId': response.paymentId,
+        'timestamp': FieldValue.serverTimestamp(),
+        'status': 'success',
+        'settled': false,
+      });
+
+      debugPrint("Payment document created ✅");
+    } catch (e) {
+      debugPrint("Error saving payment: $e");
+    }
+  }
+
+  void _handlePaymentError(PaymentFailureResponse response) {
+    debugPrint("Payment failed: ${response.code} - ${response.message}");
+  }
+
+  void _handleExternalWallet(ExternalWalletResponse response) {
+    debugPrint("External wallet selected: ${response.walletName}");
+  }
+
+  void dispose() {
+    _razorpay.clear();
   }
 }

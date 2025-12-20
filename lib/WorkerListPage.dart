@@ -167,31 +167,7 @@ class _WorkerListPageState extends State<WorkerListPage> {
                     },
                   ),
                   const SizedBox(height: 12),
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.support_agent_rounded),
-                    label: const Text(
-                      "Request Worker (Contact Admin)",
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 50, vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              RequestWorkerPage(domain: widget.domain),
-                        ),
-                      );
-                    },
-                  ),
+                 
                 ],
               ),
             ),
