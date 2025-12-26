@@ -25,7 +25,6 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
     super.dispose();
   }
 
-  // ---------------- SUBMIT & PAY ----------------
   Future<void> _submitAndPay() async {
     if (_rating == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -51,7 +50,6 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
       double newAvg =
           ((oldRating * ratingCount) + _rating) / (ratingCount + 1);
 
-      // 1️⃣ Update rating & feedback in Firestore
       await docRef.update({
         'rating': newAvg,
         'ratingCount': ratingCount + 1,
@@ -61,7 +59,6 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
         'lastUpdated': FieldValue.serverTimestamp(),
       });
 
-      // 2️⃣ Navigate to Time & Amount page
       final user = FirebaseAuth.instance.currentUser;
       final userName = user?.displayName ?? user?.email ?? 'Unknown User';
 
@@ -85,7 +82,6 @@ class _WorkerProfilePageState extends State<WorkerProfilePage> {
     }
   }
 
-  // ---------------- CALL ADMIN ----------------
   Future<void> _callAdmin() async {
     final Uri uri = Uri(scheme: 'tel', path: adminPhone);
     if (!await launchUrl(uri)) {
