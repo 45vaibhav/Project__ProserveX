@@ -40,7 +40,6 @@ class _BasicPaymentPageState extends State<BasicPaymentPage> {
     super.dispose();
   }
 
-  // ✅ PAYMENT SUCCESS
   void _handlePaymentSuccess(PaymentSuccessResponse response) async {
     final totalAmount = selectedHours * ratePerHour;
 
@@ -103,7 +102,6 @@ class _BasicPaymentPageState extends State<BasicPaymentPage> {
     _razorpay.open(options);
   }
 
-  // 🔥 TIME OPTION BUTTON
   Widget _hourButton(int hour) {
     final isSelected = selectedHours == hour;
 

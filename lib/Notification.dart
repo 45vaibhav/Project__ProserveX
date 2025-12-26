@@ -8,18 +8,15 @@ class NotificationService {
     if (user == null) return;
 
     FirebaseMessaging messaging = FirebaseMessaging.instance;
-
-    // Request permission (Android 13+, iOS)
     await messaging.requestPermission(
       alert: true,
       badge: true,
       sound: true,
     );
 
-    // Get FCM token
     String? token = await messaging.getToken();
     if (token != null) {
-      // Save token in Firestore
+
       await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
         'fcmToken': token,
       });
